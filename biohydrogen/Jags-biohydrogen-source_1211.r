@@ -3,7 +3,7 @@
 #   Kruschke, J. K. (2015). Doing Bayesian Data Analysis, Second Edition: 
 #   A Tutorial with R, JAGS, and Stan. Academic Press / Elsevier.
 
-source("/Users/wdsxx0610/Documents/R_directory/A_formation/biohydrogen/DBDA2E-utilities.R")
+source("../utils/DBDA2E-utilities.R")
 
 #===============================================================================
 

@@ -1,35 +1,35 @@
 # ==============================================================================
-# 脚本：将 Test A 的自然参数转换为 Test C 的 Log-Normal 先验参数
-# 输出：生成一个新的 CSV 文件，包含直接可填入 JAGS 的 mu_log 和 tau_log
+# Script: Convert Test A natural parameters to Test C Log-Normal prior parameters
+# Output: Generate a new CSV file with mu_log and tau_log ready to fill into JAGS
 # ==============================================================================
 
 rm(list=ls())
 library(dplyr)
 
 # ------------------------------------------------------------------------------
-# 1. 配置路径
+# 1. Configure paths
 # ------------------------------------------------------------------------------
-# 输入文件：之前提取的 Test A 原始结果
-input_file  <- "/Users/wdsxx0610/Documents/R_directory/TestABdata/Priors_Extraction/Extracted_Priors_from_TestA.csv"
+# Input file: previously extracted Test A raw results
+input_file  <- "../priors/priors_extraction_results/Extracted_Priors_from_TestA.csv"
 
-# 输出文件：准备好给 JAGS 用的文件
-output_file <- "/Users/wdsxx0610/Documents/R_directory/TestABdata/Priors_Extraction/Ready_for_JAGS_Priors.csv"
+# Output file: file prepared for JAGS
+output_file <- "../priors/priors_extraction_results/Ready_for_JAGS_Priors.csv"
 
-# 设定工程参数
-inflation_factor <- 2.0  # SD 膨胀系数 (放宽 2 倍)
+# Set engineering parameters
+inflation_factor <- 2.0  # SD inflation coefficient (relax 2 times)
 
 # ------------------------------------------------------------------------------
-# 2. 定义转换函数
+# 2. Define conversion function
 # ------------------------------------------------------------------------------
-# 将自然尺度的 Mean/SD 转换为 对数尺度的 Mean/Precision
-# m: 自然均值 (已缩放)
-# s: 自然标准差 (已缩放且膨胀)
+# Convert natural scale Mean/SD to log scale Mean/Precision
+# m: natural mean (already scaled)
+# s: natural standard deviation (already scaled and inflated)
 calc_log_params <- function(m, s) {
-  # 防止 m 或 s 为 0 导致计算错误
+  # Prevent m or s from being 0 causing calculation errors
   m <- max(m, 1e-6)
   s <- max(s, 1e-6)
   
-  # 公式
+  # Formula
   var_log <- log(1 + (s^2 / m^2))
   mu_log  <- log(m) - 0.5 * var_log
   tau_log <- 1 / var_log
@@ -38,21 +38,21 @@ calc_log_params <- function(m, s) {
 }
 
 # ------------------------------------------------------------------------------
-# 3. 读取并处理数据
+# 3. Read and process data
 # ------------------------------------------------------------------------------
 cat(">>> Reading data from:", input_file, "\n")
 df <- read.csv(input_file)
 
-# 创建空的列来存储结果
+# Create empty columns to store results
 df$Scale_Factor <- NA
-df$Target_Mean_Nat <- NA  # 目标自然均值 (Test C)
-df$Target_SD_Nat   <- NA  # 目标自然标准差 (Test C)
-df$Log_Mean        <- NA  # dlnorm 的参数 1
-df$Log_Precision   <- NA  # dlnorm 的参数 2 (Tau)
+df$Target_Mean_Nat <- NA  # Target natural mean (Test C)
+df$Target_SD_Nat   <- NA  # Target natural standard deviation (Test C)
+df$Log_Mean        <- NA  # dlnorm parameter 1
+df$Log_Precision   <- NA  # dlnorm parameter 2 (Tau)
 
 cat(">>> Processing parameters...\n")
 
-# 遍历每一行进行计算
+# Iterate through each row for calculation
 for (i in 1:nrow(df)) {
   
   row <- df[i, ]
@@ -61,31 +61,31 @@ for (i in 1:nrow(df)) {
   mean_val <- row$Mean
   sd_val <- row$SD
   
-  # --- Step A: 确定缩放因子 ---
-  # Hydrogen (产率) -> 1.0
-  # Acetate/Glucose/Biomass (浓度) -> 2.0
+  # --- Step A: Determine scaling factor ---
+  # Hydrogen (yield) -> 1.0
+  # Acetate/Glucose/Biomass (concentration) -> 2.0
   if (metabolite == "Hydrogen") {
     s_factor <- 1.0
   } else {
-    # 对于 Amax (浓度参数) 进行翻倍，其他动力学参数(a,b,c) 不翻倍
+    # For Amax (concentration parameter) double it, other kinetic parameters (a,b,c) not doubled
     if (param == "Amax") {
       s_factor <- 2.0
     } else {
-      s_factor <- 1.0 # 动力学常数通常不随底物浓度改变均值
+      s_factor <- 1.0 # Kinetic constants usually don't change mean with substrate concentration
     }
   }
   
-  # --- Step B: 计算目标自然参数 (Test C Natural Scale) ---
-  # 均值：乘以缩放因子
+  # --- Step B: Calculate target natural parameters (Test C Natural Scale) ---
+  # Mean: multiply by scaling factor
   target_mean <- mean_val * s_factor
   
-  # 标准差：先乘以缩放因子(如果是浓度)，再乘以膨胀系数(放宽)
+  # Standard deviation: first multiply by scaling factor (if concentration), then by inflation coefficient (relax)
   target_sd <- sd_val * s_factor * inflation_factor
   
-  # --- Step C: 对数转换 ---
+  # --- Step C: Logarithmic transformation ---
   log_res <- calc_log_params(target_mean, target_sd)
   
-  # --- Step D: 填回表格 ---
+  # --- Step D: Fill back into table ---
   df$Scale_Factor[i]    <- s_factor
   df$Target_Mean_Nat[i] <- round(target_mean, 4)
   df$Target_SD_Nat[i]   <- round(target_sd, 4)
@@ -94,14 +94,14 @@ for (i in 1:nrow(df)) {
 }
 
 # ------------------------------------------------------------------------------
-# 4. 保存结果
+# 4. Save results
 # ------------------------------------------------------------------------------
 write.csv(df, output_file, row.names = FALSE)
 
-# 打印预览
+# Print preview
 print("----------------------------------------------------------------")
-print("转换完成！以下是部分结果预览 (Log_Mean 和 Log_Precision 可直接填入 dlnorm):")
+print("Conversion complete! Below is a preview of some results (Log_Mean and Log_Precision can be directly filled into dlnorm):")
 print("----------------------------------------------------------------")
 print(head(df[, c("Metabolite", "Parameter", "Target_Mean_Nat", "Log_Mean", "Log_Precision")]))
 
-cat(paste0("\n文件已保存至: ", output_file, "\n"))
+cat(paste0("\nFile saved to: ", output_file, "\n"))

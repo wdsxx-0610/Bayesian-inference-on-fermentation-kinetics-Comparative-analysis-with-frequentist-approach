@@ -7,17 +7,17 @@ library(patchwork)
 library(cowplot)
 
 # =============================
-# 基础参数
+# Basic parameters
 # =============================
-fileName <- "/Users/wdsxx0610/Documents/R_directory/A_formation/cofermentation/"
+fileName <- "./results/"
 cofermentation_names <- c("Lactate", "Acetate", "Ethanol", "PDO")
 
 # =============================
-# 绘图函数（带刻度控制 & 自动扩展）
+# Plot function (with scale control & automatic expansion)
 # =============================
 generate_plot <- function(metabolite, y_limits = NULL, y_breaks = NULL) {
   
-  # 读取数据
+  # Read data
   df_f <- read.csv(file.path(fileName, metabolite, paste0(metabolite, "_frequentist.csv")))
   df_b <- read.csv(file.path(fileName, metabolite, paste0(metabolite, "_1211bayesian.csv")))
   

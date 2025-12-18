@@ -2,7 +2,7 @@
 # Accompanies the book:
 #   
 
-source("/Users/wdsxx0610/Documents/R_directory/A_formation/cofermentation/DBDA2E-utilities.R")
+source("../utils/DBDA2E-utilities.R")
 
 #===============================================================================
 

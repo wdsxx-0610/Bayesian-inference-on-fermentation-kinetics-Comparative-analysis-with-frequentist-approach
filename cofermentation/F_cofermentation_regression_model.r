@@ -5,15 +5,15 @@ rm(list=ls())  # Careful! This clears all of R's memory!
 library(minpack.lm)
 library(ggplot2)
 # generate data
-dataroots = "/Users/wdsxx0610/Documents/R_directory/A_formation/cofermentation/"
-rawData = read.csv( file=paste0(dataroots,"CofermentationData - original data.csv") )
+dataroots = "../data/"
+rawData = read.csv( file=paste0(dataroots,"CofermentationData.csv") )
 head(rawData)
 xName = "time"
 metabolites = c( "Lactate","Acetate", "Ethanol", "PDO")
 x = rawData[,1]
 y = rawData[,5]
 yName = metabolites[4]
-fileNameRoot = paste0(dataroots, yName, "/", yName, "_")
+fileNameRoot = paste0("./results/", yName, "/", yName, "_")
 outCSV = paste0(fileNameRoot, "frequentist.csv")
 outSMRY = paste0(fileNameRoot, "frequentist_summary.csv")
 # fit the model 

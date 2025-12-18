@@ -5,7 +5,7 @@ rm(list=ls())  # Careful! This clears all of R's memory!
 library(minpack.lm)
 library(ggplot2)
 # generate data
-rawData = read.csv( file="/Users/wdsxx0610/Documents/R_directory/A_formation/biohydrogen/biohydrogenData.csv" )
+rawData = read.csv( file="../data/biohydrogenData.csv" )
 head(rawData)
 xName = "time"
 metabolites = c("biomass", "glucose", "hydrogen", "acetate", "lactate")
@@ -14,7 +14,7 @@ x = rawData[,1]
 y = rawData[,i+1]
 yName = metabolites[i]
 yName
-fileNameRoot = paste0("/Users/wdsxx0610/Documents/R_directory/A_formation/biohydrogen/", yName, "/", yName, "_","123")
+fileNameRoot = paste0("./results/", yName, "/", yName, "_","123")
 outCSV = paste0(fileNameRoot, "frequentist.csv")
 outSMRY = paste0(fileNameRoot, "frequentist_summary.csv")
 # fit the model 
