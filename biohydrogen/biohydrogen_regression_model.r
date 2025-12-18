@@ -5,7 +5,7 @@ rm(list=ls())  # Careful! This clears all of R's memory!
 library(minpack.lm)
 library(ggplot2)
 # generate data
-rawData = read.csv( file="/Users/wdsxx0610/Documents/R_directory/A_formation/biohydrogen/biohydrogenData.csv" )
+rawData = read.csv( file="../data/biohydrogenData.csv" )
 head(rawData)
 xName = "time"
 metabolites = c("biomass", "glucose", "hydrogen", "acetate", "lactate")
@@ -14,7 +14,7 @@ x = rawData[,1]
 y = rawData[,i+1]
 yName = metabolites[i]
 yName
-fileNameRoot = paste0("/Users/wdsxx0610/Documents/R_directory/A_formation/biohydrogen/", yName, "/", yName, "_","123")
+fileNameRoot = paste0("./results/", yName, "/", yName, "_","123")
 outCSV = paste0(fileNameRoot, "frequentist.csv")
 outSMRY = paste0(fileNameRoot, "frequentist_summary.csv")
 # fit the model 
@@ -34,11 +34,11 @@ start_values <- c(Amax=init_lactate[1], a=init_lactate[2], b=init_lactate[3], c=
 #start_values <- c(Amax=100, a=0.06,  c=55)
 #model <- nls(y ~ Amax / (1+exp(-a*(x-c))),
 #model <- nls(y ~ Amax / (1+exp(b*(x-c))),    
-#不收敛
-#考虑到生物氢发酵葡萄糖消耗的单调下降特性，并结合
-#模型辨识性分析（参数 a,b 满足 a ≈ -b 的共线性约束，
-#导致 Fisher 信息矩阵奇异），我们采用单侧 logistic
-#模型 f(t) = Amax/(1+exp(b(t-c)))。该模型数值稳定，
+# Does not converge
+# Considering the monotonic decreasing characteristic of glucose consumption in biohydrogen fermentation,
+# and combined with model identifiability analysis (parameters a,b satisfy the collinearity constraint a ≈ -b,
+# leading to singular Fisher information matrix), we adopt the single-sided logistic
+# model f(t) = Amax/(1+exp(b(t-c))). This model is numerically stable.
 model <- nls(y ~ Amax / (exp(-a*(x-c)) + exp(b*(x-c))),
 		start = start_values,
 		algorithm = "port",

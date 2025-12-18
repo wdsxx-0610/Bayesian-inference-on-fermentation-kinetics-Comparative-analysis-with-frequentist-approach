@@ -7,17 +7,17 @@ library(patchwork)
 library(cowplot)
 
 # =============================
-# 基础参数
+# Basic parameters
 # =============================
-fileName <- "/Users/wdsxx0610/Documents/R_directory/A_formation/cofermentation/"
+fileName <- "./results/"
 cofermentation_names <- c("Lactate", "Acetate", "Ethanol", "PDO")
 
 # =============================
-# 绘图函数（带刻度控制 & 自动扩展）
+# Plot function (with scale control & automatic expansion)
 # =============================
 generate_plot <- function(metabolite, y_limits = NULL, y_breaks = NULL) {
   
-  # 读取数据
+  # Read data
   df_f <- read.csv(file.path(fileName, metabolite, paste0(metabolite, "_frequentist.csv")))
   df_b <- read.csv(file.path(fileName, metabolite, paste0(metabolite, "_1211bayesian.csv")))
   
@@ -46,33 +46,33 @@ generate_plot <- function(metabolite, y_limits = NULL, y_breaks = NULL) {
   
   combined_data <- bind_rows(data_f, data_b)
   
-  # 如果没有给 y_limits，就自动计算
+  # If no y_limits given, calculate automatically
   if (is.null(y_limits)) {
     ymin_auto <- min(combined_data$Lower, na.rm = TRUE)
     ymax_auto <- max(combined_data$Upper, na.rm = TRUE) * 1.05
     y_limits <- c(ymin_auto, ymax_auto)
   }
   
-  # 如果手动给了 y_limits，但数据最大值比上限大，自动扩展
+  # If y_limits manually given but data max exceeds upper limit, expand automatically
   max_data <- max(combined_data$Upper, na.rm = TRUE)
   if (y_limits[2] < max_data) {
     y_limits[2] <- max_data * 1.05
   }
   
-  # 自动计算刻度
+  # Automatically calculate scale
   if (is.null(y_breaks)) {
     y_breaks <- pretty(y_limits, n = 5)
   }
   
-  # 设置纵轴标签
+  # Set y-axis label
   label_text <- ifelse(metabolite == "PDO",
                        '"1,3-PDO"~(g/L)',
                        paste0('"', metabolite, '"~(g/L)'))
-  # --- x 轴（固定最大 75）---
+  # --- x-axis (fixed max 75) ---
   x_limits <- c(0, 78)
   x_breaks <- seq(0, 75, 15)
   
-  # 绘图
+  # Plot
   p <- ggplot() +
     geom_ribbon(data = combined_data,
                 aes(x = Time, ymin = Lower, ymax = Upper, fill = Method),
@@ -106,7 +106,7 @@ generate_plot <- function(metabolite, y_limits = NULL, y_breaks = NULL) {
 }
 
 # =============================
-# 手动刻度设置
+# Manual scale settings
 # =============================
 y_settings <- list(
   Lactate = list(limits = c(0, 16.0), breaks = seq(0, 16.0, 4.0)),
@@ -115,7 +115,7 @@ y_settings <- list(
   PDO     = list(limits = c(0, 90.0), breaks = seq(0, 90.0, 15.0))
 )
 
-# 生成主图列表
+# Generate main plot list
 plot_list <- lapply(cofermentation_names, function(met) {
   generate_plot(met,
                 y_limits = y_settings[[met]]$limits,
@@ -123,7 +123,7 @@ plot_list <- lapply(cofermentation_names, function(met) {
 })
 
 # =============================
-# 读取模型评估指标
+# Read model evaluation metrics
 # =============================
 metrics_df <- data.frame(Metabolite = character(),
                          Method = character(),
@@ -155,7 +155,7 @@ metrics_long <- metrics_df %>%
   )
 
 # =============================
-# 柱状图
+# Bar charts
 # =============================
 bar_rmse <- ggplot(filter(metrics_long, Metric == "RMSE"),
                    aes(x = Metabolite, y = Value, fill = Method)) +
@@ -187,18 +187,18 @@ legend_plot <- ggplot() +
 library(ggplot2)
 library(cowplot)
 
-# --- 1. 定义单行布局参数 ---
-y_pos <- 0.5       # 所有元素都在同一水平线上
-line_len <- 0.05   # 线条/方块的宽度
-gap_text <- 0.01   # 图标和文字的间距
+# --- 1. Define single-row layout parameters ---
+y_pos <- 0.5       # All elements on the same horizontal line
+line_len <- 0.05   # Width of lines/blocks
+gap_text <- 0.01   # Gap between icon and text
 
-# 颜色
+# Colors
 col_bayes <- "#0000FF"
 col_freq  <- "#FF0000"
 
 legend_G_plot <- ggplot() +
   # =======================================================
-# 第 1 组：贝叶斯蓝线 (Bayesian Mean) - 位置 X ~ 0.05
+# Group 1: Bayesian blue line (Bayesian Mean) - Position X ~ 0.05
 # =======================================================
 annotate("segment", x = 0.05, xend = 0.05 + line_len, y = y_pos, yend = y_pos, 
          color = col_bayes, linewidth = 1.2) +
@@ -207,7 +207,7 @@ annotate("segment", x = 0.05, xend = 0.05 + line_len, y = y_pos, yend = y_pos,
            hjust = 0, vjust = 0.5, size = 4, family = "Arial", color = "#333333") +
   
   # =======================================================
-# 第 2 组：贝叶斯蓝框 (Bayesian CI) - 位置 X ~ 0.28
+# Group 2: Bayesian blue box (Bayesian CI) - Position X ~ 0.28
 # =======================================================
 annotate("rect", xmin = 0.28, xmax = 0.28 + line_len, 
          ymin = y_pos - 0.15, ymax = y_pos + 0.15, 
@@ -217,7 +217,7 @@ annotate("rect", xmin = 0.28, xmax = 0.28 + line_len,
            hjust = 0, vjust = 0.5, size = 4, family = "Arial", color = "#333333") +
   
   # =======================================================
-# 第 3 组：频率学红线 (Freq Mean) - 位置 X ~ 0.53
+# Group 3: Frequentist red line (Freq Mean) - Position X ~ 0.53
 # =======================================================
 annotate("segment", x = 0.53, xend = 0.53 + line_len, y = y_pos, yend = y_pos, 
          color = col_freq, linewidth = 1.2) +
@@ -226,7 +226,7 @@ annotate("segment", x = 0.53, xend = 0.53 + line_len, y = y_pos, yend = y_pos,
            hjust = 0, vjust = 0.5, size = 4, family = "Arial", color = "#333333") +
   
   # =======================================================
-# 第 4 组：频率学红框 (Freq CI) - 位置 X ~ 0.75
+# Group 4: Frequentist red box (Freq CI) - Position X ~ 0.75
 # =======================================================
 annotate("rect", xmin = 0.75, xmax = 0.75 + line_len, 
          ymin = y_pos - 0.15, ymax = y_pos + 0.15, 
@@ -235,27 +235,27 @@ annotate("rect", xmin = 0.75, xmax = 0.75 + line_len,
            label = "95% confidence interval", 
            hjust = 0, vjust = 0.5, size = 4, family = "Arial", color = "#333333") +
   
-  # --- 设置画布 ---
+  # --- Set canvas ---
   scale_x_continuous(limits = c(0, 1), expand = c(0,0)) + 
   scale_y_continuous(limits = c(0, 1), expand = c(0,0)) +
   theme_void()
-# 1. 生成上方 4 张图的网格 (A, B, C, D)
+# 1. Generate grid for upper 4 plots (A, B, C, D)
 main_plots <- plot_grid(
   plot_list[[1]], plot_list[[2]],
   plot_list[[3]], plot_list[[4]],
   labels = LETTERS[1:4], 
   label_size = 14,
   ncol = 2, 
-  align = 'hv' # 保证对齐
+  align = 'hv' # Ensure alignment
 )
 
-# 2. 将主图和图例垂直拼接
+# 2. Vertically combine main plots and legend
 final_plot <- plot_grid(
-  main_plots,     # 上部分
-  legend_G_plot,  # 下部分
+  main_plots,     # Upper part
+  legend_G_plot,  # Lower part
   ncol = 1,
-  # 调整高度比例：
-  # 上面的图占绝大部分 (比如 20)，下面的图例占很小一部分 (比如 1)
+  # Adjust height ratio:
+  # Upper plots take most space (e.g. 20), legend takes small part (e.g. 1)
   rel_heights = c(20, 1) 
 )
 

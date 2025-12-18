@@ -5,11 +5,11 @@ rm(list=ls())  # Careful! This clears all of R's memory!
 #------------------------------------------------------------------------------- 
 #------------------------------------------------------------------------------- 
 # Load the relevant model into R's working memory:
-source("/Users/wdsxx0610/Documents/R_directory/A_formation/biohydrogen/Jags-biohydrogen-source_1211.R")
+source("Jags-biohydrogen-source_1211.r")
 #------------------------------------------------------------------------------- 
 # #.............................................................................
 # Only one predictor:
-rawData = read.csv( file="/Users/wdsxx0610/Documents/R_directory/A_formation/biohydrogen/biohydrogenData.csv" )
+rawData = read.csv( file="../data/biohydrogenData.csv" )
 xName = "time"
 metabolites = c("biomass", "glucose", "hydrogen", "acetate", "lactate")
 unit = c(" (g/L)", " (g/L)", " (mol/mol)", " (mM)", " (mM)")
@@ -42,7 +42,7 @@ init_guess <<- data.frame(pName, init_biomass, init_glucose, init_hydrogen,
   
   init_c <<- init_guess[4,i+1]
   init_s <<- init_guess[5,i+1] #sigma
-  fileNameRoot = paste0("/Users/wdsxx0610/Documents/R_directory/A_formation/biohydrogen/", yName, "/", yName, "_", "123")
+  fileNameRoot = paste0("./results/", yName, "/", yName, "_", "123")
   fileNameRoot
   outCSV = paste0(fileNameRoot, "bayesian.csv")
   outSMRY = paste0(fileNameRoot, "bayesian_summary.csv")
@@ -61,7 +61,7 @@ parameterNames = varnames(mcmcCoda) # get all parameter names
 #  diagMCMC( codaObject=mcmcCoda, parName=parName, 
 #            saveName=fileNameRoot, saveType=graphFileType )
 #}
-parameterNames = varnames(mcmcCoda)   # 建议直接这样
+parameterNames = varnames(mcmcCoda)   # Recommended approach
 print(parameterNames)
 
 for (parName in parameterNames) {
@@ -107,7 +107,7 @@ plotMCMC( mcmcCoda , data=plotData , xName=xName , yName=yName ,
 #generate MCMC density plots
 library(mcmcplots)
 #
-#主要的问题是在这个部分的某一个参数b或者a因为太稀疏所以没办法画出密度图
+#The main issue is that parameter b or a is too sparse to generate a density plot
 #png(paste0(fileNameRoot, "Post_Density.png"))
 ##  denplot(mcmcCoda, parms = c("Amax", "a","b", "c"))
 #dev.off()
@@ -232,8 +232,8 @@ mode <- function(x) {
 #example: find mode in Amax
 mode(mcmc[,1])
 
-# 提取 Test C 的标准差 (Standard Deviation)
-# 假设你已经跑完了 Test C 的代码，且 mcmcCoda 对象还在内存里
+# Extract Test C standard deviation (Standard Deviation)
+# Assumes Test C code has been run and mcmcCoda object is still in memory
 TestC_SD <- apply(as.matrix(mcmcCoda), 2, sd)
 print(TestC_SD)
 

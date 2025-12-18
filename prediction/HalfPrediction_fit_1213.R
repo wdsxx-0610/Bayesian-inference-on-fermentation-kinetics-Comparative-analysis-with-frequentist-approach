@@ -1,18 +1,18 @@
 # ==============================================================================
-# 完整非线性回归对比代码：Frequentist vs Bayesian (User Specified Priors)
+# Complete nonlinear regression comparison code: Frequentist vs Bayesian (User Specified Priors)
 # Modified: 2024-12-13
 # ==============================================================================
 
-# --- 1. 加载必要的包 ---
+# --- 1. Load required packages ---
 if (!require("pacman")) install.packages("pacman")
 pacman::p_load(tidyverse, rjags, coda, Metrics, investr)
 
-# --- 2. 设置路径 (请根据你的实际情况修改) ---
-data_path <- "/Users/wdsxx0610/Documents/R_directory/A_formation/cofermentation/CofermentationData.csv" 
-save_dir  <- "/Users/wdsxx0610/Documents/R_directory/A_formation/cofermentation/Half_prediction_Results"
+# --- 2. Set paths (modify according to your actual situation) ---
+data_path <- "../data/CofermentationData.csv" 
+save_dir  <- "./results/Half_prediction_Results"
 if (!dir.exists(save_dir)) dir.create(save_dir)
 
-# --- 3. 定义获取特定代谢物 JAGS 模型的函数 (使用用户提供的 Log-Normal 先验) ---
+# --- 3. Define function to get JAGS model for specific metabolite (using user-provided Log-Normal priors) ---
 get_model_string <- function(metabolite_name) {
   
   if (metabolite_name == "Acetate") {
@@ -136,14 +136,14 @@ get_model_string <- function(metabolite_name) {
   }
 }
 
-# --- 4. 核心拟合函数 ---
+# --- 4. Core fitting function ---
 fit_metabolite <- function(df, metabolite_col) {
   
   cat(sprintf("\n=========================================\n"))
   cat(sprintf("Processing Metabolite: %s", metabolite_col))
   cat(sprintf("\n=========================================\n"))
   
-  # 数据准备
+  # Data preparation
   if (!metabolite_col %in% colnames(df)) {
     stop(paste("Column", metabolite_col, "not found in dataframe."))
   }
@@ -151,12 +151,12 @@ fit_metabolite <- function(df, metabolite_col) {
   df_sub <- df %>% 
     select(time, !!sym(metabolite_col)) %>% 
     rename(value = !!sym(metabolite_col)) %>%
-    filter(!is.na(value)) # 去除空值
+    filter(!is.na(value)) # Remove null values
   
   n <- nrow(df_sub)
   if(n == 0) stop("No data for this metabolite.")
   
-  # 50% 用于训练，50% 用于测试
+  # 50% for training, 50% for testing
   train_df <- df_sub[1:(n/2), ]
   test_df  <- df_sub[(n/2 + 1):n, ]
   
@@ -177,11 +177,11 @@ fit_metabolite <- function(df, metabolite_col) {
     return(NULL)
   })
   
-  # 预测范围
+  # Prediction range
   full_time <- seq(0, 70, length.out = 200)
   
   if (!is.null(nonlinear_model)) {
-    # 预测区间
+    # Prediction interval
     pred_fit_obj <- tryCatch({
       investr::predFit(
         nonlinear_model, 
@@ -198,7 +198,7 @@ fit_metabolite <- function(df, metabolite_col) {
     ci_lower_nls   <- pred_fit_obj[, "lwr"]
     ci_upper_nls   <- pred_fit_obj[, "upr"]
     
-    # 测试集RMSE
+    # Test set RMSE
     test_pred_nls <- predict(nonlinear_model, newdata = test_df)
     rmse_nls <- rmse(test_df$value, test_pred_nls)
     nsme_nls <- 1 - sum((test_pred_nls - test_df$value)^2) / sum((test_df$value - mean(test_df$value))^2)
@@ -216,8 +216,8 @@ fit_metabolite <- function(df, metabolite_col) {
   
   data_jags <- list(x = train_df$time, y = train_df$value, n = nrow(train_df))
   
-  # 初始值: 可以根据 log-normal 的均值给一个合理的起始 exp 值
-  # 这里为了简便，给一个相对通用的初始值，或者利用训练数据
+  # Initial values: can give a reasonable starting exp value based on log-normal mean
+  # For simplicity, give a relatively general initial value, or use training data
   inits <- function() list(
     logAmax = log(max(train_df$value)),
     logc    = log(mean(train_df$time)), 
@@ -227,17 +227,17 @@ fit_metabolite <- function(df, metabolite_col) {
   model_string <- get_model_string(metabolite_col)
   writeLines(model_string, "temp_model.jags")
   
-  # 运行 JAGS
-  # 增加 n.adapt 和 n.iter 以确保收敛，因为使用了较强的先验
+  # Run JAGS
+  # Increase n.adapt and n.iter to ensure convergence, because strong priors are used
   model <- jags.model("temp_model.jags", data = data_jags, inits = inits, n.chains = 3, n.adapt = 2000, quiet = FALSE)
   update(model, 2000)
-  # 监控 Amax, a, b, c, tau (物理参数)
+  # Monitor Amax, a, b, c, tau (physical parameters)
   samples <- coda.samples(model, variable.names = c("Amax", "a", "b", "c", "tau"), n.iter = 10000)
   post <- as.data.frame(do.call(rbind, samples))
   
-  # 贝叶斯预测区间
+  # Bayesian prediction interval
   pred_matrix <- sapply(full_time, function(tx) {
-    # 向量化计算以加速
+    # Vectorized calculation for acceleration
     mu <- post$Amax / (exp(-post$a * (tx - post$c)) + exp(post$b * (tx - post$c)))
     sigma <- 1 / sqrt(post$tau)
     rnorm(length(mu), mu, sigma)
@@ -247,7 +247,7 @@ fit_metabolite <- function(df, metabolite_col) {
   lower_bayes <- apply(pred_matrix, 2, quantile, 0.025)
   upper_bayes <- apply(pred_matrix, 2, quantile, 0.975)
   
-  # 测试集 RMSE
+  # Test set RMSE
   test_pred_bayes <- sapply(test_df$time, function(tx) {
     mean(post$Amax / (exp(-post$a * (tx - post$c)) + exp(post$b * (tx - post$c))))
   })
@@ -256,7 +256,7 @@ fit_metabolite <- function(df, metabolite_col) {
   nsme_bayes <- 1 - sum((test_pred_bayes - test_df$value)^2) / sum((test_df$value - mean(test_df$value))^2)
   
   # ---------------------------------------------------------
-  # C. 保存结果
+  # C. Save results
   # ---------------------------------------------------------
   save_df <- tibble(
     time = full_time,
@@ -279,53 +279,52 @@ fit_metabolite <- function(df, metabolite_col) {
   ))
 }
 
-# --- 5. 主执行逻辑 (在此处修改以分别运行) ---
+# --- 5. Main execution logic (modify here to run separately) ---
 
-# --- 5.1 读取并清洗数据 ---
+# --- 5.1 Read and clean data ---
 if (file.exists(data_path)) {
   raw_df <- read.csv(data_path)
   
-  # 清洗列名: 
-  # 1. 确保 x -> time
-  # 2. 其他列首字母大写 (这样 lactate 会变成 Lactate)
+  # Clean column names: 
+  # 1. Ensure x -> time
+  # 2. Capitalize first letter of other columns (so lactate becomes Lactate)
   df <- raw_df %>%
     rename(time = time) %>%
     rename_with(~ str_to_title(.), .cols = -time) 
   
-  # [关键修复] 如果自动大写把 PDO 变成了 Pdo，这里强制改回 PDO
+  # [Critical fix] If auto capitalization changed PDO to Pdo, force it back to PDO
   if ("Pdo" %in% colnames(df)) {
     df <- df %>% rename(PDO = Pdo)
   }
   
   print("Data loaded successfully from CofermentationData.csv")
   print("Columns found:")
-  print(colnames(df)) # 打印列名，确认里面有 "PDO"
+  print(colnames(df)) # Print column names, confirm "PDO" is present
   print(head(df))
   
 } else {
-  stop(paste("找不到文件:", data_path))
+  stop(paste("File not found:", data_path))
 }
 
-# 5.2 选择要运行的代谢物
+# 5.2 Select which metabolite to run
 # ==========================================================
-# 修改下方的 target_metabolite 变量来选择你要跑哪一个
-# 可选项: "Lactate", "Acetate", "Ethanol", "PDO"
+# Modify the target_metabolite variable below to select which one to run
+# Options: "Lactate", "Acetate", "Ethanol", "PDO"
 # ==========================================================
 
-target_metabolite <- "Lactate"   # <--- 在这里修改! 例如改成 "Acetate"
-target_metabolite <- "Acetate"  
-target_metabolite <- "Ethanol"  
-target_metabolite <- "PDO"  
-# 5.3 运行逻辑
+# Select which metabolite to analyze (modify this line):
+target_metabolite <- "PDO"   # <--- Modify here! Options: "Lactate", "Acetate", "Ethanol", "PDO"
+
+# 5.3 Run logic
 if (target_metabolite %in% colnames(df)) {
   
-  # 运行单个
+  # Run single metabolite
   result <- fit_metabolite(df, target_metabolite)
   
-  # 显示结果
+  # Display results
   print(as.data.frame(result))
   
-  # 保存单个结果指标
+  # Save single result metrics
   metrics_file <- file.path(save_dir, paste0(target_metabolite, "_metrics.csv"))
   write_csv(as.data.frame(result), metrics_file)
   cat(paste("\nMetrics saved to:", metrics_file, "\n"))

@@ -6,11 +6,11 @@ rm(list=ls())  # Careful! This clears all of R's memory!
 #------------------------------------------------------------------------------- 
 #------------------------------------------------------------------------------- 
 # Load the relevant model into R's working memory:
-source("/Users/wdsxx0610/Documents/R_directory/A_formation/cofermentation/Jags-cofermentation-source1211.R")
+source("Jags-cofermentation-source1211.r")
 #------------------------------------------------------------------------------- 
 # #.............................................................................
 # Only one predictor:
-rawData = read.csv( file="/Users/wdsxx0610/Documents/R_directory/A_formation/cofermentation/CofermentationData - original data.csv")
+rawData = read.csv( file="../data/CofermentationData.csv")
 
 head(rawData)
 xName = "time"
@@ -39,12 +39,12 @@ init_guess
   init_b <<- init_guess[3,i+1]
   init_c <<- init_guess[4,i+1]
   init_s <<- init_guess[5,i+1]
-  fileNameRoot = paste0("/Users/wdsxx0610/Documents/R_directory/A_formation/cofermentation", "/", yName,"/", yName, "_","1211")
+  fileNameRoot = paste0("./results/", yName, "/", yName, "_","1211")
   fileNameRoot
   outCSV = paste0(fileNameRoot, "bayesian.csv")
   outSMRY = paste0(fileNameRoot, "bayesian_summary.csv")
 outCSV
-outDir <- "/Users/wdsxx0610/Documents/R_directory/A_formation/cofermentation/"
+outDir <- "./results/"
   #
 # Generate the MCMC chain:
 mcmcCoda = genMCMC(rawData[,1], rawData[,i+1], 
@@ -121,7 +121,7 @@ coefs = apply(mcmc, 2, median) #use median value for Amax, a, b, c, and sigma
 
 fitted = array(nrow(plotData))
 for (j in 1:nrow(plotData)){
-  # 统一使用 MHSF 4参数公式
+  # Use unified MHSF 4-parameter formula
   t_val = plotData$time[j]
   fitted[j] = coefs["Amax"] / (exp(-coefs["a"]*(t_val - coefs["c"])) + 
                                  exp( coefs["b"]*(t_val - coefs["c"])))
@@ -151,8 +151,8 @@ newTime = seq(min(plotData$time, na.rm=TRUE), max(plotData$time, na.rm=TRUE), le
 yRep = matrix(NA, nrow=nrow(mcmc), ncol=length(newTime))
 
 for (k in 1:nrow(mcmc)){
-  p <- mcmc[k,] # 取第 k 行参数
-  # 统一公式
+  p <- mcmc[k,] # Extract kth row parameters
+  # Unified formula
   yRep[k,] = p["Amax"] / (exp(-p["a"]*(newTime - p["c"])) + 
                             exp( p["b"]*(newTime - p["c"])))
 }
@@ -195,12 +195,12 @@ write.csv(output, outCSV)
 mcmc=as.matrix(mcmcCoda)
 newTime = as.array(x = c(min(rawData$time,na.rm=TRUE), max(rawData$time,na.rm=TRUE)))
 # effect size
-# ... (newTime 定义保持不变) ...
-fit = matrix(NA, nrow(mcmc), length(newTime)) # 修正 ncol 定义
+# ... (newTime definition remains unchanged) ...
+fit = matrix(NA, nrow(mcmc), length(newTime)) # Fix ncol definition
 
 for (k in 1:nrow(mcmc)){
   p <- mcmc[k,]
-  # 统一公式
+  # Unified formula
   fit[k,] = p["Amax"] / (exp(-p["a"]*(newTime - p["c"])) + 
                            exp( p["b"]*(newTime - p["c"])))
 
