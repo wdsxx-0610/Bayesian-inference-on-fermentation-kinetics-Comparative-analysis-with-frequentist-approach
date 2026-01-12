@@ -14,10 +14,11 @@ If you find our work useful in your research, please consider citing:
 ```bibtex
 @misc{YourLastName2025,
   title  = {Bayesian Inference on fermentation kinetics: Comparative analysis with frequentist approach},
-  author = {Xiang Li， Yen-Han Lin},
+  author = {Xiang Li and Yen-Han Lin},
   year   = {2025},
   note   = {Submitted to Bioresource Technology / Under Review}
 }
+```
 
 
 ## Repository Structure
