@@ -55,16 +55,16 @@ genMCMC = function(x, y,
   }
   model {
     for ( i in 1:Ntotal ) {
-      #y[i] ~ dt(mu[i], sigma, nu)
-      y[i] ~ dnorm(mu[i], sigma)
+      #y[i] ~ dt(mu[i], precision, nu)
+      y[i] ~ dnorm(mu[i], precision)
       mu[i] <- Amax/(exp(-a*(x[i]-c))+exp(b*(x[i]-c)))
     }
     Amax ~ dlnorm(init_Amax, inits_precision[1] )
     a ~ dlnorm(init_a, inits_precision[2] )
     b ~ dlnorm(init_b, inits_precision[3])
     c ~ dlnorm(init_c, inits_precision[4])    
-    real_sigma ~ dunif(init_s , 100)
-    sigma = 1/(real_sigma*real_sigma)
+    sigma ~ dunif(init_s , 100)
+    precision = 1/(sigma*sigma)
     #nu ~ dexp(1/30.0)
   }
   " # close quote for modelString
