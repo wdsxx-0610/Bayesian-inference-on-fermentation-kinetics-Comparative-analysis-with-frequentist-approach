@@ -2,10 +2,7 @@ cff-version: 1.2.0
 message: "If you use this software, please cite it as below."
 type: software
 title: "Bayesian Inference in Fermentation Compared with Frequentist Method"
-authors:
-  - family-names: "Wang"
-    given-names: "Dashuai"
-    alias: "wdsxx-0610"
+authors:"NA"
 repository-code: "https://github.com/wdsxx-0610/Bayesian-inference-in-fermentation-compared-with-frequentist-method"
 abstract: >
   This study explores the application of Bayesian inference to fermentation 
