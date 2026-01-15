@@ -1,18 +1,16 @@
 # Bayesian-inference-in-fermentation-compared-with-frequentist-method
 
-This study explores the application of Bayesian inference to fermentation kinetic modeling, focusing on two representative batch systems: glycerol-glucose co-fermentation for 1,3-propanediol (1,3-PDO) production and dark fermentation for biohydrogen production.
-DOI:
+Xiang Li, Yen-Han Lin,
+Bayesian inference on fermentation kinetics: Comparative analysis with frequentist approach,
+Bioresource Technology,
+2026,
+134012,
+ISSN 0960-8524,
+https://doi.org/10.1016/j.biortech.2026.134012.
+(https://www.sciencedirect.com/science/article/pii/S0960852426000933)
+Abstract: This study explores the application of Bayesian inference to fermentation kinetic modeling, focusing on two representative batch systems: glycerol-glucose co-fermentation for 1,3-propanediol (1,3-PDO) production and dark fermentation for biohydrogen production. Modified hyperbolic secant functions were implemented to model metabolite concentrations obtained from above-noted experiments. Then, the performance of a Bayesian hierarchical model to that of frequentist nonlinear least squares fitting was compared. The results indicate that while the frequentist approach demonstrates high computational efficiency and suitability for short-term prediction, the Bayesian approach offers significant advantages in terms of parameter interpretability, robustness under limited data, and uncertainty quantification. Overall, Bayesian methods enhance the construction of interpretable, stable, and data-efficient fermentation kinetic models.
+Keywords: Bayesian hierarchical modeling; Uncertainty; Co‑fermentation dynamics; Markov Chain Monte Carlo; Biohydrogen
 
-**BibTeX:**
-
-```bibtex
-@misc{Xiang 2025,
-  title  = {Bayesian Inference on fermentation kinetics: Comparative analysis with frequentist approach},
-  author = {Xiang Li and Yen-Han Lin},
-  year   = {2025},
-  note   = {Submitted to Bioresource Technology / Under Review}
-}
-```
 
 
 ## Repository Structure
